@@ -21,6 +21,33 @@ class GlucoregulatoryEnv(gym.Env):
         We need to initialize some random BGL and start inserting events.
         """
 
+        # From the predict QA
+        normalized_history = [
+            {
+                "type": "TempBasal",
+                "start_at": "2015-07-17T12:00:00",
+                "end_at": "2015-07-17T13:00:00",
+                "amount": 1.0,
+                "unit": "U/hour"
+            }
+        ]
+
+        normalized_glucose = [
+            {
+                "date": "2015-07-17T12:00:00",
+                "sgv": 150
+            }
+        ]
+
+        glucose = future_glucose(
+            normalized_history,
+            normalized_glucose,
+            4,
+            Schedule(self.insulin_sensitivities['sensitivities']),
+            Schedule(self.carb_ratios['schedule']),
+            basal_dosing_end=datetime(2015, 7, 17, 12, 30)
+        )
+
 
     def _step(self, action):
         """
