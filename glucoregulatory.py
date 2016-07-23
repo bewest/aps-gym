@@ -16,38 +16,39 @@ logging.info("imports succeeded")
 
 class GlucoregulatoryEnv(gym.Env):
 
-    def __init__(self):
+    def __init__(self, seed=None, history=None):
         """
         We need to initialize some random BGL and start inserting events.
+        Open question: what's our time delta? probably nice to put that in
+        as a parameter.
+
+        Perhaps starting BGL should also be a random number within some
+        bounds with a seed passed in as a default parameter.
         """
 
-        # From the predict QA
-        normalized_history = [
-            {
-                "type": "TempBasal",
-                "start_at": "2015-07-17T12:00:00",
-                "end_at": "2015-07-17T13:00:00",
-                "amount": 1.0,
-                "unit": "U/hour"
-            }
-        ]
+        # BGL in which to declare the episode failed [mg/dL (?)]
+        self.bgl_threshold_low = 20
+        self.bgl_threshold_high = 800
+        # Valid amounts of insulin to dose [mg (?)]
+        self.low_dose = 0
+        self.low_dose = 15 # what should this really be?
 
-        normalized_glucose = [
-            {
-                "date": "2015-07-17T12:00:00",
-                "sgv": 150
-            }
-        ]
+        # The action space is single value amount of insulin to give in mg/dL(?)
+        self.action_space = spaces.Box(low_dose, high_dose, [1,1])
+        # Observation space is a single value BGL
+        self.observation_space = spaces.Box(self.bgl_threshold_low, self.bgl_threshold_high, [1,1])
 
-        glucose = future_glucose(
-            normalized_history,
-            normalized_glucose,
-            4,
-            Schedule(self.insulin_sensitivities['sensitivities']),
-            Schedule(self.carb_ratios['schedule']),
-            basal_dosing_end=datetime(2015, 7, 17, 12, 30)
-        )
+        # Now initialize some history and present state This will be a dict
+        # of current bgl, normalized history, normalized glucose, and
+        # effects, or those duplicating some things?
+        if history is None:
+            # generate our own history
+        else:
+            # we were provided some history, just use that
 
+    def _seed(self, seed=None):
+        self.np_random, seed, seeding.np_random(seed)
+        return [seed]
 
     def _step(self, action):
         """
@@ -69,8 +70,6 @@ class GlucoregulatoryEnv(gym.Env):
         to live, and ideally stay within some acceptable blood-glucose level.
         Something like inverse square distance from 100 sounds reasonable for
         now.
-
-        If we die (BGL <20ish, > 800ish) then declare done :-(
 
         I guess we can provide the actions such as eating and exercise as
         info
