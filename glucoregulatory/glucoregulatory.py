@@ -6,6 +6,7 @@ added insulin on glucose level.
 """
 
 import logging
+import gym
 from gym import spaces
 from gym.utils import seeding
 import numpy as np
@@ -15,6 +16,10 @@ import openapscontrib.predict as predict
 logging.info("imports succeeded")
 
 class GlucoregulatoryEnv(gym.Env):
+    metadata = {
+      'render.modes': ['human', 'rgb_array'],
+      'video.frames_per_second': 30
+    }
 
     def __init__(self, seed=None, history=None):
         """
@@ -25,6 +30,7 @@ class GlucoregulatoryEnv(gym.Env):
         Perhaps starting BGL should also be a random number within some
         bounds with a seed passed in as a default parameter.
         """
+        super(GlucoregulatoryEnv, self).__init__( )
 
         # BGL in which to declare the episode failed [mg/dL (?)]
         self.bgl_threshold_low = 20
@@ -43,12 +49,18 @@ class GlucoregulatoryEnv(gym.Env):
         # effects, or those duplicating some things?
         if history is None:
             # generate our own history
+            pass
         else:
             # we were provided some history, just use that
+            pass
 
     def _seed(self, seed=None):
         self.np_random, seed, seeding.np_random(seed)
         return [seed]
+
+    def _reset (self):
+        # stubbing out for now
+        pass
 
     def _step(self, action):
         """
