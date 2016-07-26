@@ -23,10 +23,10 @@ class ScheinerWalshModel (object):
     self.insulin_absorption_delay = kwds.get('insulin_absorption_delay', None)
 
 
-  def get_state (self):
-    state = dict(glucose=self.glucose, treatments=self.insulin, calibrations=calibrations, counts=self.counts)
+  def get_state (self, effects=[]):
+    state = dict(glucose=self.glucose, treatments=self.insulin, calibrations=calibrations, counts=self.counts, effects=effects)
     return state
-  def get_momentum_effect (self, prediction_time=None)
+  def get_momentum_effect (self, prediction_time=None):
     prediction_time = prediction_time or self.prediction_time
     return predict.calculate_momentum_effect((self.glucose), prediction_time=prediction_time, recent_calibrations=self.calibrations)
 
@@ -51,26 +51,35 @@ class ScheinerWalshModel (object):
   def append_action (self, action):
     # self.insulin.append(action)
     return
+
   def act (self, act):
-    self.append_action(action)
-    momentum = = self.get_momentum_effect( )
-    effects = [ self.get_walsh_insulin_effect( ), self.get_scheiner_carb_effect( ) ]
+    """
+    """
+    # 1. Add action to list of previous actions
+    self.append_action(act)
+    # 2. Get effects due to new action
+    momentum = self.get_momentum_effect( )
+    walsh = self.get_walsh_insulin_effect( )
+    scheiner = self.get_scheiner_carb_effect( )
+    effects = [ walsh, scheiner ]
+    # 3. Get new glucose based on these new effects
     new_glucose = prepare.calculate_glucose_from_effects(effects, self.glucose, momentum=momentum)
     self.glucose = new_glucose
+    # increment counter
     self.count += 1
-    return new_glucose
-    pass
+    state = self.get_state(dict(momentum=momentum, scheiner=scheiner, walsh=walsh))
+    return state
 
   @classmethod
   def prep_spec (Klass, prefix='~/Documents/foobar', tag='builtin'):
     results = dict( )
     if tag == 'builtin':
-      results.update(glucose=prepare._json_file(join(prefix, 'monitor/glucose.json'))
+      results.update(glucose=prepare._json_file(join(prefix, 'monitor/glucose.json')))
       results.update(calibrations=prepare._opt_json_file(join(prefix, 'monitor/calibrations.json')) or  ())
       crs = dict(carb_ratios=dict(schedule=[]))
       isfs = dict(insulin_sensitivities=dict(sensitivities=[]))
       settings = dict(insulin_action_curve=4)
-      results.update(carb_ratios=(prepare._opt_json_file(join(prefix, 'raw-pump/carb-ratios.json')) or crs)['carb_ratios']['schedule']
+      results.update(carb_ratios=(prepare._opt_json_file(join(prefix, 'raw-pump/carb-ratios.json')) or crs)['carb_ratios']['schedule'])
       results.update(insulin_sensitivities=(prepare._opt_json_file(join(prefix, 'raw-pump/insulin-sensitivities-raw.json')) or isfs)['insulin_sensitivities']['sensitivities'])
       results.update(insulin_action_curve=(prepare._opt_json_file(join(prefix, 'monitor/settings.json')) or settings)['insulin_action_curve'])
 
